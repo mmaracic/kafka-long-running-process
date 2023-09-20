@@ -1,0 +1,23 @@
+server:
+  port: 8280
+
+spring:
+  cloud:
+    function:
+      definition: messageConsumer
+    stream:
+      kafka:
+        binder:
+          brokers: localhost
+          min-partition-count: 1
+          auto-create-topics: true
+      bindings:
+        consumer-in-0:
+          destination: messages
+          group: messages-1
+          consumer:
+            batch-mode: true
+            concurrency: 2
+            max-attempts: 1
+        output-out-0:
+          destination: batch-out
