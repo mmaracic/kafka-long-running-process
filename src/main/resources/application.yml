@@ -32,7 +32,7 @@ spring:
             reset-offsets: true
         genericMessageConsumer-in-0:
           destination: test-topic
-          group: group-1
+          group: group-3
           consumer:
             auto-startup: false
             batch-mode: false
@@ -40,7 +40,7 @@ spring:
             reset-offsets: true
         genericMessagesConsumer-in-0:
           destination: test-topic
-          group: group-2
+          group: group-4
           consumer:
             auto-startup: false
             batch-mode: true
