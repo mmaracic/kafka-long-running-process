@@ -4,20 +4,47 @@ server:
 spring:
   cloud:
     function:
-      definition: messageConsumer
+      definition: messageConsumer;messagesConsumer;genericMessageConsumer;genericMessagesConsumer;messageProducerAutomated
     stream:
       kafka:
         binder:
           brokers: localhost
           min-partition-count: 1
           auto-create-topics: true
+          consumer-properties:
+            value.deserializer: com.mmaracic.kafka_long_process_demo.MessageDeserializer
       bindings:
-        consumer-in-0:
-          destination: messages
-          group: messages-1
+        messageConsumer-in-0:
+          destination: test-topic
+          group: group-1
           consumer:
+            auto-startup: true
+            batch-mode: false
+            concurrency: 1
+            reset-offsets: true
+        messagesConsumer-in-0:
+          destination: test-topic
+          group: group-2
+          consumer:
+            auto-startup: true
             batch-mode: true
-            concurrency: 2
-            max-attempts: 1
-        output-out-0:
-          destination: batch-out
+            concurrency: 1
+            reset-offsets: true
+        genericMessageConsumer-in-0:
+          destination: test-topic
+          group: group-1
+          consumer:
+            auto-startup: false
+            batch-mode: false
+            concurrency: 1
+            reset-offsets: true
+        genericMessagesConsumer-in-0:
+          destination: test-topic
+          group: group-2
+          consumer:
+            auto-startup: false
+            batch-mode: true
+            concurrency: 1
+            reset-offsets: true
+        messageProducerAutomated-out-0:
+          destination: test-topic
