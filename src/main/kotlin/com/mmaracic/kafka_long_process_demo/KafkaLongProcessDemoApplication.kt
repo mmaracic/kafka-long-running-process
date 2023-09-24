@@ -3,11 +3,17 @@ package com.mmaracic.kafka_long_process_demo
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.cloud.stream.binding.BindingsLifecycleController
 import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.context.annotation.Bean
 import org.springframework.kafka.support.serializer.JsonDeserializer
 import org.springframework.messaging.support.GenericMessage
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 import java.time.OffsetDateTime
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -23,7 +29,7 @@ class KafkaLongProcessDemoApplication {
 
     private val logger = Logger.getLogger(KafkaLongProcessDemoApplication::class.java.name)
 
-    //consumer - singe
+    //consumer - single
     @Bean
     fun messageConsumer(): Consumer<Message> {
         return Consumer {
@@ -43,7 +49,7 @@ class KafkaLongProcessDemoApplication {
     }
 
     //Generic consumers are better for debugging errors while setting up, contain message headers with offsets and payload type
-    //generic consumer - singe
+    //generic consumer - single
     @Bean
     fun genericMessageConsumer(): Consumer<GenericMessage<Message>> {
         return Consumer {
@@ -85,3 +91,68 @@ class ProducerManual(private val streamBridge: StreamBridge) {
 class MessageDeserializer : JsonDeserializer<Message?>()
 
 class Message(@JsonProperty("dateTime") val dateTime: OffsetDateTime)
+
+@Component
+class ConsumerManipulator(val bindingsController: BindingsLifecycleController) {
+
+    private val logger = Logger.getLogger(ConsumerManipulator::class.java.name)
+
+    //Name is the name of the binding in yml file
+    fun pauseConsumer(name: String): Boolean {
+        val binding = bindingsController.queryState(name).first()
+        return if (binding.isRunning) {
+            logger.info("Pausing consumer $name")
+            bindingsController.changeState(name, BindingsLifecycleController.State.PAUSED);
+            if (binding.isPaused) {
+                logger.info("Consumer $name is paused")
+                true
+            } else {
+                logger.warning("Consumer $name is not paused")
+                false
+            }
+        } else {
+            logger.warning("Consumer $name is not running")
+            false
+        }
+    }
+
+    fun resumeConsumer(name: String): Boolean {
+        val binding = bindingsController.queryState(name).first()
+        return if (binding.isPaused) {
+            logger.info("Resuming consumer $name")
+            bindingsController.changeState(name, BindingsLifecycleController.State.RESUMED);
+            if (binding.isRunning) {
+                logger.info("Consumer $name is running")
+                true
+            } else {
+                logger.warning("Consumer $name is not running")
+                false
+            }
+        } else {
+            logger.warning("Consumer $name is running")
+            false
+        }
+    }
+}
+
+data class StatusInfo(
+    val name: String,
+    val action: String,
+    val result: Boolean,
+    val timestamp: OffsetDateTime = OffsetDateTime.now()
+)
+
+@RestController
+@RequestMapping("consumer")
+class ConsumerController(val consumerManipulator: ConsumerManipulator) {
+
+    @GetMapping("/pause/{name}", produces = ["application/json"])
+    fun pauseConsumer(@PathVariable("name") consumerName: String): StatusInfo {
+        return StatusInfo(consumerName, "Paused", consumerManipulator.pauseConsumer(consumerName))
+    }
+
+    @GetMapping("/resume/{name}", produces = ["application/json"])
+    fun resumeConsumer(@PathVariable("name") consumerName: String): StatusInfo {
+        return StatusInfo(consumerName, "Resumed", consumerManipulator.resumeConsumer(consumerName))
+    }
+}
