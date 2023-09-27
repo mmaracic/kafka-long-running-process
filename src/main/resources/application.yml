@@ -13,12 +13,20 @@ spring:
           auto-create-topics: true
           consumer-properties:
             value.deserializer: com.mmaracic.kafka_long_process_demo.MessageDeserializer
+            enable.auto.commit: false
+        bindings:
+          genericMessageConsumer-in-0:
+            consumer:
+              ack-mode: manual
+          genericMessagesConsumer-in-0:
+            consumer:
+              ack-mode: manual
       bindings:
         messageConsumer-in-0:
           destination: test-topic
           group: group-1
           consumer:
-            auto-startup: true
+            auto-startup: false
             batch-mode: false
             concurrency: 1
             reset-offsets: true
@@ -26,7 +34,7 @@ spring:
           destination: test-topic
           group: group-2
           consumer:
-            auto-startup: true
+            auto-startup: false
             batch-mode: true
             concurrency: 1
             reset-offsets: true
@@ -42,9 +50,15 @@ spring:
           destination: test-topic
           group: group-4
           consumer:
-            auto-startup: false
+            auto-startup: true
             batch-mode: true
             concurrency: 1
             reset-offsets: true
         messageProducerAutomated-out-0:
           destination: test-topic
+
+logging:
+  level:
+    org:
+      springframework:
+        kafka: debug

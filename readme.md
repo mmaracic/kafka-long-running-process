@@ -11,7 +11,7 @@ https://www.baeldung.com/spring-cloud-stream-kafka-avro-confluent
 Spring Cloud Stream
 https://docs.spring.io/spring-cloud-stream/docs/current/reference/html/spring-cloud-stream.html#_configuration_options
 
-Spring cloud kafka binder properties with emphasis on pause and resume
+Spring cloud kafka binder properties with emphasis on pause and resume and manual acknowledgement
 https://cloud.spring.io/spring-cloud-stream-binder-kafka/spring-cloud-stream-binder-kafka.html#pause-resume
 
 Using rest actuator calls
@@ -19,6 +19,11 @@ https://blog.devgenius.io/pause-resume-kafka-consumer-using-actuator-in-spring-c
 
 Using BindingsLifecycleController
 https://docs.spring.io/spring-cloud-stream/docs/3.1.3/reference/html/spring-cloud-stream.html#binding_visualization_control
+
+Acknowledgement
+https://stackoverflow.com/questions/66102489/spring-cloud-stream-kafka-null-acknowledgement-header
+
+To avoid repetition, Spring Cloud Stream supports setting values for all channels, in the format of spring.cloud.stream.kafka.default.consumer.<property>=<value>.
 
 Writing consumers and producers in newer versions of spring cloud stream
 https://stackoverflow.com/questions/65978055/enablebinding-output-input-deprecated-since-version-of-3-1-of-spring-cloud-str

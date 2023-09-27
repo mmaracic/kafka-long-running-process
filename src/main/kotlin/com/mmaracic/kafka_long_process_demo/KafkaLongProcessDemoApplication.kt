@@ -6,6 +6,8 @@ import org.springframework.boot.runApplication
 import org.springframework.cloud.stream.binding.BindingsLifecycleController
 import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.context.annotation.Bean
+import org.springframework.kafka.support.Acknowledgment
+import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.kafka.support.serializer.JsonDeserializer
 import org.springframework.messaging.support.GenericMessage
 import org.springframework.stereotype.Component
@@ -53,7 +55,8 @@ class KafkaLongProcessDemoApplication {
     @Bean
     fun genericMessageConsumer(): Consumer<GenericMessage<Message>> {
         return Consumer {
-            logger.info("Received message ${it.payload.dateTime} on offset ${it.headers["kafka_offset"]}")
+            logger.info("Received message ${it.payload.dateTime} on offset ${it.headers[KafkaHeaders.OFFSET]}")
+            acknowledgeMessage(it)
         }
     }
 
@@ -61,10 +64,12 @@ class KafkaLongProcessDemoApplication {
     @Bean
     fun genericMessagesConsumer(): Consumer<GenericMessage<List<Message>>> {
         return Consumer {
-            logger.info("Received batch message  count ${it.payload.size}, offsets ${it.headers["kafka_offset"]}")
-            it.payload.forEach {
-                logger.info("Received batched message ${it.dateTime}")
+            logger.info("Received batch message  count ${it.payload.size}, offsets ${it.headers[KafkaHeaders.OFFSET]}")
+            it.payload.forEachIndexed {index, it1 ->
+                logger.info("Received batched message ${it1.dateTime}")
+                //acknowledgeMessages(it, index)
             }
+            acknowledgeMessage(it)
         }
     }
 
@@ -72,6 +77,28 @@ class KafkaLongProcessDemoApplication {
     @Bean
     fun messageProducerAutomated(): Supplier<Message> {
         return Supplier { Message(OffsetDateTime.now()) }
+    }
+
+    //acknowledge a message or whole batch in ack-mode: MANUAL
+    fun <T> acknowledgeMessage(message: GenericMessage<T>) {
+        val acknowledgment = message.headers[KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java]
+        if (acknowledgment != null) {
+            logger.info("Acknowledgment provided on message offset ${message.headers[KafkaHeaders.OFFSET]}")
+            acknowledgment.acknowledge()
+        } else {
+            logger.warning("Acknowledgment NOT provided on message offset ${message.headers[KafkaHeaders.OFFSET]}")
+        }
+    }
+
+    //Acknowledge a single batch message in batch mode: AckMode.MANUAL_IMMEDIATE
+    fun <T> acknowledgeMessages(message: GenericMessage<T>, index: Int) {
+        val acknowledgment = message.headers[KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java]
+        if (acknowledgment != null) {
+            logger.info("Acknowledgment provided on message offset ${message.headers[KafkaHeaders.OFFSET]} batch index $index")
+            acknowledgment.acknowledge(index)
+        } else {
+            logger.warning("Acknowledgment NOT provided on message offset ${message.headers[KafkaHeaders.OFFSET]}")
+        }
     }
 }
 
