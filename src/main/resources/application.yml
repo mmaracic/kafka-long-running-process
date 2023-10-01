@@ -4,7 +4,7 @@ server:
 spring:
   cloud:
     function:
-      definition: messageConsumer;messagesConsumer;genericMessageConsumer;genericMessagesConsumer;messageProducerAutomated
+      definition: messageConsumer;messagesConsumer;genericMessageConsumer;genericMessagesConsumer;messageProducerAutomated;genericMessagesConsumerLongRebalanced;genericMessagesConsumerLongCompleted
     stream:
       kafka:
         binder:
@@ -13,12 +13,19 @@ spring:
           auto-create-topics: true
           consumer-properties:
             value.deserializer: com.mmaracic.kafka_long_process_demo.MessageDeserializer
-            enable.auto.commit: false
+            max.poll.interval.ms: 1000
+            max.poll.records: 10
         bindings:
           genericMessageConsumer-in-0:
             consumer:
               ack-mode: manual
           genericMessagesConsumer-in-0:
+            consumer:
+              ack-mode: manual
+          genericMessagesConsumerLongRebalanced-in-0:
+            consumer:
+              ack-mode: manual
+          genericMessagesConsumerLongCompleted-in-0:
             consumer:
               ack-mode: manual
       bindings:
@@ -50,7 +57,23 @@ spring:
           destination: test-topic
           group: group-4
           consumer:
+            auto-startup: false
+            batch-mode: true
+            concurrency: 1
+            reset-offsets: true
+        genericMessagesConsumerLongRebalanced-in-0:
+          destination: test-topic
+          group: group-5
+          consumer:
             auto-startup: true
+            batch-mode: true
+            concurrency: 1
+            reset-offsets: true
+        genericMessagesConsumerLongCompleted-in-0:
+          destination: test-topic
+          group: group-6
+          consumer:
+            auto-startup: false
             batch-mode: true
             concurrency: 1
             reset-offsets: true
@@ -61,4 +84,4 @@ logging:
   level:
     org:
       springframework:
-        kafka: debug
+        kafka: info
